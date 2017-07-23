@@ -28,6 +28,7 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+		//Call to fetch items from source
         new FetchItemsTask().execute();
     }
 
