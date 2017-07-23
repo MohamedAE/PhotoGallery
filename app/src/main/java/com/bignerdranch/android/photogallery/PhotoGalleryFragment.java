@@ -96,7 +96,7 @@ public class PhotoGalleryFragment extends Fragment {
     }
 
     /*Creates background thread to run doInBackground(...) method
-    * <Params,Progress,Result
+    * <Params,Progress,Result>
     * Params - Type of parameters sent to task upon execution
     * Progress - Type of progress units published during background task
     * Result - Type of result of background task*/
@@ -106,7 +106,7 @@ public class PhotoGalleryFragment extends Fragment {
             return new FlickrFetchr().fetchItems();
         }
 
-        /*onPostExecute(...) - Run after doInBackground(...)*/
+        /*onPostExecute(...) - Runs after doInBackground(...)*/
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
             mItems = items;

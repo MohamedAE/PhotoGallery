@@ -65,6 +65,7 @@ public class FlickrFetchr {
         try {
             //Use Uri.Builder to build complete URL for Flickr API request
             String url = Uri.parse("https://api.flickr.com/services/rest/")
+                    //Construct new builder; copy attributes from this uri
                     .buildUpon()
                     //Invoke GetRecent method
                     .appendQueryParameter("method", "flickr.photos.getRecent")
