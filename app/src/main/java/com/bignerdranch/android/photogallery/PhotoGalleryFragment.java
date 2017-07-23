@@ -45,7 +45,11 @@ public class PhotoGalleryFragment extends Fragment {
 
     /*Configure GalleryItems arraylist with appropriate adapter*/
     private void setupAdapter() {
-        //Check if this fragment has been attached to an activity
+        /*AsyncTask is triggering callbacks from a background thread
+        * Cannot assume that the fragment is attached to an activity (PhotoGalleryActivity)
+        * If not, operations that rely on parent will fail
+        *
+        * Ultimately updates RecyclerView*/
         if (isAdded()) {
             mPhotoRecyclerView.setAdapter(new PhotoAdapter(mItems));
         }
@@ -97,16 +101,21 @@ public class PhotoGalleryFragment extends Fragment {
 
     /*Creates background thread to run doInBackground(...) method
     * <Params,Progress,Result>
-    * Params - Type of parameters sent to task upon execution
-    * Progress - Type of progress units published during background task
+    * Params - Type of input parameters passed to execute()
+    * Progress - Type for sending progress updates
     * Result - Type of result of background task*/
     private class FetchItemsTask extends AsyncTask<Void,Void,List<GalleryItem>> {
 
+        /*Pass ...(Void... params)
+        * AsyncTask is a generic type; doInBackground() has no sense of passed data*/
         protected List<GalleryItem> doInBackground(Void... params) {
             return new FlickrFetchr().fetchItems();
         }
 
-        /*onPostExecute(...) - Runs after doInBackground(...)*/
+        /*onPostExecute(...) - Runs after doInBackground(...) is completed
+        * FlickrFetcher from doInBackground(...) is passed here
+        * mItems is updated with new collection
+        * setupAdapter() to update RecyclerView*/
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
             mItems = items;

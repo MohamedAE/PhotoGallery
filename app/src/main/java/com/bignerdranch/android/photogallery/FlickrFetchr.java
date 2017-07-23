@@ -21,7 +21,7 @@ public class FlickrFetchr {
     private static final String TAG = "FlickrFetchr";
     private static final String API_KEY = "3868d93169de7166e9772d0e46aa22fb";
 
-    /*Convert incoming URL to String*/
+    /*Fetch raw data from a String; returns array of bytes*/
     public byte[] getUrlBytes(String urlSpec) throws IOException {
         //Create URL object
         URL url = new URL(urlSpec);
@@ -53,11 +53,14 @@ public class FlickrFetchr {
         }
     }
 
-    /*Convert incoming URL to String*/
+    /*Convert results from getUrlBytes(...) to String*/
     public String getUrlString(String urlSpec) throws IOException {
         return new String(getUrlBytes(urlSpec));
     }
 
+    /*Construct query string
+    * Call parseItems(...) to fill with return from query
+    * Return assembled collection of GalleryItems*/
     public List<GalleryItem> fetchItems() {
         //Arraylist of gallery items to be filled
         List<GalleryItem> items = new ArrayList<>();
@@ -78,9 +81,14 @@ public class FlickrFetchr {
                     //Include URL for small version of photo, if available
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
+
+            /*Final String query*/
             String jsonString = getUrlString(url);
+
             Log.i(TAG, "Received JSON:" + jsonString);
+
             /*Produce object with JSON hierarchy mapped to original JSON text
+            * A set of name/value pairs
             * -JSONObject
             * --photos
             * ---array
@@ -92,12 +100,16 @@ public class FlickrFetchr {
         } catch (IOException ioe) {
             Log.e(TAG, "Failed to fetch items", ioe);
         }
+
+        //Pass (by reference) the ArrayList of GalleryItems (model objects)
         return items;
     }
 
+    /*Parse data from JSONObject into collection*/
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException {
-        //JSONObject - Set of name/value pairs
+        //Get from the JSON hierarchy value mapped to "photos"
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
+        //Get from above JSONObject a JSONArray mapped to "photo"
         JSONArray photoJsonArray = photosJsonObject.getJSONArray("photo");
 
         for (int i = 0; i < photoJsonArray.length(); i++) {
