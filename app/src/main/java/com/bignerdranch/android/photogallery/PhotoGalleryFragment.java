@@ -1,8 +1,11 @@
 package com.bignerdranch.android.photogallery;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -34,7 +37,23 @@ public class PhotoGalleryFragment extends Fragment {
 		//Call to fetch items from source
         new FetchItemsTask().execute();
 
-		mThumbNailDownloader = new ThumbnailDownloader<>();
+        //Automatically associate Handler with current (main) thread
+        Handler responseHandler = new Handler();
+        //Associate instance of ThumbnailDownloader with this thread's response handler
+		mThumbNailDownloader = new ThumbnailDownloader<>(responseHandler);
+        //Set listener for successful downloads
+        mThumbNailDownloader.setThumbnailDownloadListener(
+                new ThumbnailDownloader.ThumbnailDownloadListener<PhotoHolder>() {
+                    @Override
+                    public void onThumbnailDownloaded(PhotoHolder photoHolder, Bitmap bitmap) {
+                        //Get Drawable
+                        Drawable drawable = new BitmapDrawable(getResources(), bitmap);
+                        //Bind Drawable to photo holder
+                        photoHolder.bindDrawable(drawable);
+                    }
+                }
+        );
+
 		//Start downloader thread
 		mThumbNailDownloader.start();
 		//Associate new thread with a Looper
@@ -52,6 +71,12 @@ public class PhotoGalleryFragment extends Fragment {
         setupAdapter();
 
         return v;
+    }
+
+    @Override
+    public void onDestroyView() {
+        super.onDestroyView();
+        mThumbNailDownloader.clearQueue();
     }
 
     @Override
