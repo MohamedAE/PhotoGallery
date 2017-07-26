@@ -133,10 +133,36 @@ public class PhotoGalleryFragment extends Fragment {
         @Override
         public void onBindViewHolder(PhotoHolder photoHolder, int position) {
             GalleryItem galleryItem = mGalleryItems.get(position);
-			Drawable placeholder = getResources().getDrawable(R.drawable.placeholder);
-			photoHolder.bindDrawable(placeholder);
-			//Pass this PhotoHolder to the download thread to be associated with an image
-			mThumbNailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
+			Bitmap bitmap = mThumbNailDownloader.getCachedImage(galleryItem.getUrl());
+
+            if (bitmap == null) {
+                Drawable drawable = getResources().getDrawable(R.drawable.placeholder);
+                photoHolder.bindDrawable(drawable);
+                mThumbNailDownloader.queueThumbnail(photoHolder, galleryItem.getUrl());
+            } else {
+                Log.i(TAG, "Loaded image from cache");
+                photoHolder.bindDrawable(new BitmapDrawable(getResources(), bitmap));
+            }
+
+            preloadAdjacentImages(position);
+        }
+
+        private void preloadAdjacentImages(int position) {
+            //Number of images before and after position to cache
+            final int imageBufferSize = 10;
+
+            //Determine first/last indexes to load
+            int startIndex = Math.max(position - imageBufferSize, 0);
+            int endIndex = Math.max(position + imageBufferSize, 0);
+
+            //Populate relevant gallery items, populating
+            for (int i = startIndex; i < endIndex; i++) {
+                //Current image is already loaded; do not load again
+                if(i == position) continue;
+
+                String url = mGalleryItems.get(i).getUrl();
+                mThumbNailDownloader.preloadImage(url);
+            }
         }
 
         @Override

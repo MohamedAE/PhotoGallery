@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
 import android.util.Log;
+import android.util.LruCache;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,6 +20,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 	private static final String TAG = "ThumbnailDownloader";
 	//Used to identify messages and download requests
 	private static final int MESSAGE_DOWNLOAD = 0;
+	private static final int MESSAGE_PRELOAD = 1;
 
 	//Reference to Handler of background thread
 	private Handler mRequestHandler;
@@ -27,6 +29,8 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 	//Reference to Handler passed from the main thread
 	private Handler mResponseHandler;
 	private ThumbnailDownloadListener<T> mThumbnailDownloadListener;
+	//Used to implement "last recently used" caching strategy
+	private LruCache<String, Bitmap> mLruCache;
 
 	/*Using an interface allows implementing classes to determine what to do with
 	* the downloaded image (PhotoGalleryFragment)*/
@@ -41,6 +45,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 	public ThumbnailDownloader(Handler responseHandler) {
 		super(TAG);
 		mResponseHandler = responseHandler;
+		mLruCache = new LruCache<String, Bitmap>(16384);
 	}
 
 	/*Method called before the first time the Looper checks for messages*/
@@ -76,9 +81,21 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 		}
 	}
 
+	public void preloadImage(String url) {
+		mRequestHandler.obtainMessage(MESSAGE_PRELOAD, url).sendToTarget();
+	}
+
 	//Clear Handler of background thread
 	public void clearQueue() {
 		mRequestHandler.removeMessages(MESSAGE_DOWNLOAD);
+	}
+
+	public void clearCache() {
+		mLruCache.evictAll();
+	}
+
+	public Bitmap getCachedImage(String url) {
+		return mLruCache.get(url);
 	}
 
 	/*Where downloading happens*/
