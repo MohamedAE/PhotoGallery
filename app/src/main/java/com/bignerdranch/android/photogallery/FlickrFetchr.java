@@ -21,6 +21,18 @@ public class FlickrFetchr {
     private static final String TAG = "FlickrFetchr";
     private static final String API_KEY = "3868d93169de7166e9772d0e46aa22fb";
 
+    private static final String FETCH_RECENTS_METHOD = "flickr.photos.getRecent";
+    private static final String SEARCH_METHOD = "flickr.photos.search";
+    //A "template" URI
+    private static final Uri ENDPOINT = Uri
+            .parse("https://api.flickr.com/services/rest/")
+            .buildUpon()
+            .appendQueryParameter("api_key", API_KEY)
+            .appendQueryParameter("format", "json")
+            .appendQueryParameter("nojsoncallback", "1")
+            .appendQueryParameter("extras", "url_s")
+            .build();
+
     /*Fetch raw data from a String; returns array of bytes*/
     public byte[] getUrlBytes(String urlSpec) throws IOException {
         //Create URL object
@@ -58,15 +70,27 @@ public class FlickrFetchr {
         return new String(getUrlBytes(urlSpec));
     }
 
+    /*Fetch recent photos from Flickr*/
+    public List<GalleryItem> fetchRecentPhotos() {
+        String url = buildUrl(FETCH_RECENTS_METHOD, null);
+        return downloadGalleryItems(url);
+    }
+
+    /*Fetch photos by given search parameter from Flickr*/
+    public List<GalleryItem> searchPhotos(String query) {
+        String url = buildUrl(SEARCH_METHOD, query);
+        return downloadGalleryItems(url);
+    }
+
     /*Construct query string
     * Call parseItems(...) to fill with return from query
     * Return assembled collection of GalleryItems*/
-    public List<GalleryItem> fetchItems() {
+    private List<GalleryItem> downloadGalleryItems(String url) {
         //Arraylist of gallery items to be filled
         List<GalleryItem> items = new ArrayList<>();
 
         try {
-            //Use Uri.Builder to build complete URL for Flickr API request
+            /*Use Uri.Builder to build complete URL for Flickr API request
             String url = Uri.parse("https://api.flickr.com/services/rest/")
                     //Construct new builder; copy attributes from this uri
                     .buildUpon()
@@ -81,6 +105,7 @@ public class FlickrFetchr {
                     //Include URL for small version of photo, if available
                     .appendQueryParameter("extras", "url_s")
                     .build().toString();
+            */
 
             /*Final String query*/
             String jsonString = getUrlString(url);
@@ -103,6 +128,19 @@ public class FlickrFetchr {
 
         //Pass (by reference) the ArrayList of GalleryItems (model objects)
         return items;
+    }
+
+    /*Appends necessary parameters to the template URI*/
+    private String buildUrl(String method, String query) {
+        Uri.Builder uriBuilder = ENDPOINT.buildUpon()
+                .appendQueryParameter("method", method);
+
+        //If query is a search, append text parameter
+        if (method.equals(SEARCH_METHOD)) {
+            uriBuilder.appendQueryParameter("text", query);
+        }
+
+        return uriBuilder.build().toString();
     }
 
     /*Parse data from JSONObject into collection*/

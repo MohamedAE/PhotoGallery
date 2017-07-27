@@ -9,8 +9,12 @@ import android.os.Handler;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SearchView;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -34,8 +38,9 @@ public class PhotoGalleryFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setRetainInstance(true);
+        setHasOptionsMenu(true);
 		//Call to fetch items from source
-        new FetchItemsTask().execute();
+        updateItems();
 
         //Automatically associate Handler with current (main) thread
         Handler responseHandler = new Handler();
@@ -85,6 +90,54 @@ public class PhotoGalleryFragment extends Fragment {
 		mThumbNailDownloader.quit();
 		Log.i(TAG, "Background thread destroyed");
 	}
+
+	@Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater menuInflater) {
+        super.onCreateOptionsMenu(menu, menuInflater);
+        menuInflater.inflate(R.menu.fragment_photo_gallery, menu);
+
+        //Create reference to search box
+        MenuItem searchItem = menu.findItem(R.id.menu_item_search);
+        //Create reference to SearchView
+        final SearchView searchView = (SearchView) searchItem.getActionView();
+
+        //Set listener for SearchView text box
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                Log.d(TAG, "QueryTextSubmit: " + s);
+                //Store query in shared preferences
+                QueryPreferences.setStoredQuery(getActivity(), s);
+                updateItems();
+                return true;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                Log.d(TAG, "QueryTextChange: " + s);
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.menu_item_clear:
+                //Passing null to setStoredQuery(...) clears search history
+                QueryPreferences.setStoredQuery(getActivity(), null);
+                updateItems();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
+    /*Update RecyclerView with new items
+    * Ultimately creates a background thread to get recents/run search*/
+    private void updateItems() {
+        new FetchItemsTask().execute();
+    }
 
     /*Configure GalleryItems arraylist with appropriate adapter*/
     private void setupAdapter() {
@@ -182,7 +235,13 @@ public class PhotoGalleryFragment extends Fragment {
         /*Pass ...(Void... params)
         * AsyncTask is a generic type; doInBackground() has no sense of passed data*/
         protected List<GalleryItem> doInBackground(Void... params) {
-            return new FlickrFetchr().fetchItems();
+            String query = "blue";
+
+            if (query == null) {
+                return new FlickrFetchr().fetchRecentPhotos();
+            } else {
+                return new FlickrFetchr().searchPhotos(query);
+            }
         }
 
         /*onPostExecute(...) - Runs after doInBackground(...) is completed
