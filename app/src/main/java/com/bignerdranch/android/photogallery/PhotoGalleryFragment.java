@@ -1,5 +1,6 @@
 package com.bignerdranch.android.photogallery;
 
+import android.app.ProgressDialog;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -28,7 +29,13 @@ public class PhotoGalleryFragment extends Fragment {
 
     private RecyclerView mPhotoRecyclerView;
     private List<GalleryItem> mItems = new ArrayList<>();
+    //Handle background downloading
 	private ThumbnailDownloader<PhotoHolder> mThumbNailDownloader;
+
+    //Search box
+    private MenuItem mSearchItem;
+    //Reference to loading dialog
+    private ProgressDialog mProgressDialog;
 
     public static PhotoGalleryFragment newInstance() {
         return new PhotoGalleryFragment();
@@ -96,10 +103,10 @@ public class PhotoGalleryFragment extends Fragment {
         super.onCreateOptionsMenu(menu, menuInflater);
         menuInflater.inflate(R.menu.fragment_photo_gallery, menu);
 
-        //Create reference to search box
-        MenuItem searchItem = menu.findItem(R.id.menu_item_search);
-        //Create reference to SearchView
-        final SearchView searchView = (SearchView) searchItem.getActionView();
+        //Reference to search box
+        mSearchItem = menu.findItem(R.id.menu_item_search);
+        //Reference to SearchView
+        final SearchView searchView = (SearchView) mSearchItem.getActionView();
 
         //Set listener for SearchView text box
         searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
@@ -108,6 +115,10 @@ public class PhotoGalleryFragment extends Fragment {
                 Log.d(TAG, "QueryTextSubmit: " + s);
                 //Store query in shared preferences
                 QueryPreferences.setStoredQuery(getActivity(), s);
+
+                //Hide keyboard after submitting search query
+                searchView.clearFocus();
+
                 updateItems();
                 return true;
             }
@@ -118,6 +129,15 @@ public class PhotoGalleryFragment extends Fragment {
                 return true;
             }
         });
+
+        //Pre-populate search box with last search query
+		searchView.setOnClickListener(new View.OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				String query = QueryPreferences.getStoredQuery(getActivity());
+				searchView.setQuery(query, false);
+			}
+		});
     }
 
     @Override
@@ -136,7 +156,8 @@ public class PhotoGalleryFragment extends Fragment {
     /*Update RecyclerView with new items
     * Ultimately creates a background thread to get recents/run search*/
     private void updateItems() {
-        new FetchItemsTask().execute();
+        String query = QueryPreferences.getStoredQuery(getActivity());
+		new FetchItemsTask(query).execute();
     }
 
     /*Configure GalleryItems arraylist with appropriate adapter*/
@@ -232,26 +253,45 @@ public class PhotoGalleryFragment extends Fragment {
     * Result - Type of result of background task*/
     private class FetchItemsTask extends AsyncTask<Void,Void,List<GalleryItem>> {
 
+		//Stored incoming query
+		private String mQuery;
+
+		public FetchItemsTask(String query) {
+			mQuery = query;
+		}
+
         /*Pass ...(Void... params)
         * AsyncTask is a generic type; doInBackground() has no sense of passed data*/
         protected List<GalleryItem> doInBackground(Void... params) {
-            String query = "blue";
-
-            if (query == null) {
+            if (mQuery == null) {
                 return new FlickrFetchr().fetchRecentPhotos();
             } else {
-                return new FlickrFetchr().searchPhotos(query);
+                return new FlickrFetchr().searchPhotos(mQuery);
             }
+        }
+
+        //Display loading bar
+        @Override
+        public void onPreExecute() {
+            mProgressDialog = new ProgressDialog(getActivity());
+            mProgressDialog.setCancelable(false);
+            mProgressDialog.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+            mProgressDialog.show();
         }
 
         /*onPostExecute(...) - Runs after doInBackground(...) is completed
         * FlickrFetcher from doInBackground(...) is passed here
         * mItems is updated with new collection
-        * setupAdapter() to update RecyclerView*/
+        * setupAdapter() to update RecyclerView
+        * hide loading bar*/
         @Override
         protected void onPostExecute(List<GalleryItem> items) {
             mItems = items;
             setupAdapter();
+
+            if (mProgressDialog != null) {
+                mProgressDialog.dismiss();
+            }
         }
 
     }
