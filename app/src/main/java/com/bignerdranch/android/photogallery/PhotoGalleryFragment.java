@@ -50,9 +50,6 @@ public class PhotoGalleryFragment extends Fragment {
 		//Call to fetch items from source
         updateItems();
 
-        //Start service
-        PollService.setServiceAlarm(getActivity(), true);
-
         //Automatically associate Handler with current (main) thread
         Handler responseHandler = new Handler();
         //Associate instance of ThumbnailDownloader with this thread's response handler
@@ -134,6 +131,14 @@ public class PhotoGalleryFragment extends Fragment {
             }
         });
 
+        //Label toggle according to alarm state
+        MenuItem toggleItem = menu.findItem(R.id.menu_item_toggle_polling);
+        if (PollService.isServiceAlarmOn(getActivity())) {
+            toggleItem.setTitle(R.string.stop_polling);
+        } else {
+            toggleItem.setTitle(R.string.start_polling);
+        }
+
         //Pre-populate search box with last search query
 		searchView.setOnClickListener(new View.OnClickListener() {
 			@Override
@@ -151,6 +156,13 @@ public class PhotoGalleryFragment extends Fragment {
                 //Passing null to setStoredQuery(...) clears search history
                 QueryPreferences.setStoredQuery(getActivity(), null);
                 updateItems();
+                return true;
+            case R.id.menu_item_toggle_polling:
+                //Determine whether an alarm is already set; act accordingly
+                boolean shouldStartAlarm = !PollService.isServiceAlarmOn(getActivity());
+                PollService.setServiceAlarm(getActivity(), shouldStartAlarm);
+                //Declare change in options menu, and update it
+                getActivity().invalidateOptionsMenu();
                 return true;
             default:
                 return super.onOptionsItemSelected(item);

@@ -2,11 +2,15 @@ package com.bignerdranch.android.photogallery;
 
 import android.app.AlarmManager;
 import android.app.IntentService;
+import android.app.Notification;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.net.ConnectivityManager;
 import android.os.SystemClock;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
 import java.util.List;
@@ -16,8 +20,8 @@ public class PollService extends IntentService {
 
 	private static final String TAG = "PollService";
 
-	//60 second poll interval
-	private static final int POLL_INTERVAL = 1000 * 60;
+	//5 second poll interval
+	private static final int POLL_INTERVAL = 1000 * 5;
 
 	public static Intent newIntent(Context context) {
 		return new Intent(context, PollService.class);
@@ -66,6 +70,13 @@ public class PollService extends IntentService {
 		}
 	}
 
+	/*Return boolean indicator: false = alarm is not set*/
+	public static boolean isServiceAlarmOn(Context context) {
+		Intent i = PollService.newIntent(context);
+		PendingIntent pi = PendingIntent.getService(context, 0, i, PendingIntent.FLAG_NO_CREATE);
+		return pi != null;
+	}
+
 	/*Respond to intent
 	* Called when the IntentService pulls a command off its queue to execute
 	* Return prematurely if no network connection is found*/
@@ -99,6 +110,30 @@ public class PollService extends IntentService {
 			Log.i(TAG, "Got an old result: " + resultId);
 		} else {
 			Log.i(TAG, "Got a new result: " + resultId);
+
+			Resources resources = getResources();
+			Intent i = PhotoGalleryActivity.newIntent(this);
+			//Prepare a PendingIntent that will restart this activity
+			PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
+
+			Notification notification = new NotificationCompat.Builder(this)
+					//Configure ticker text
+					.setTicker(resources.getString(R.string.new_pictures_title))
+					//Configure small icon
+					.setSmallIcon(android.R.drawable.ic_menu_report_image)
+					//Configure notification title
+					.setContentTitle(resources.getString(R.string.new_pictures_title))
+					//Configure notification text
+					.setContentText(resources.getString(R.string.new_pictures_text))
+					//PendingIntent fired when user presses notification
+					.setContentIntent(pi)
+					//Set notification to cancel once clicked
+					.setAutoCancel(true)
+					.build();
+
+			NotificationManagerCompat notificationManager =
+					NotificationManagerCompat.from(this);
+			notificationManager.notify(0, notification);
 		}
 
 		//Store in SharedPreferences
