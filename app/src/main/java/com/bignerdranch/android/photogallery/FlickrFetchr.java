@@ -143,7 +143,7 @@ public class FlickrFetchr {
         return uriBuilder.build().toString();
     }
 
-    /*Parse data from JSONObject into collection*/
+    /*Parse data from JSONObject into collection of gallery items*/
     private void parseItems(List<GalleryItem> items, JSONObject jsonBody) throws IOException, JSONException {
         //Get from the JSON hierarchy value mapped to "photos"
         JSONObject photosJsonObject = jsonBody.getJSONObject("photos");
@@ -162,6 +162,7 @@ public class FlickrFetchr {
             }
 
             item.setUrl(photoJsonObject.getString("url_s"));
+            item.setOwner(photoJsonObject.getString("owner"));
             items.add(item);
         }
     }
