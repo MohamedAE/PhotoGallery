@@ -6,7 +6,7 @@ import android.content.Intent;
 import android.util.Log;
 
 /*A class, standalone receiver, to handle listening to broadcast intents
-* Registered with the system in the manifest file as a receiver
+* Registered with the system in the manifest file as a broadcast receiver
 * Configured to act on the BOOT_COMPLETED broadcast*/
 public class StartupReceiver extends BroadcastReceiver {
 

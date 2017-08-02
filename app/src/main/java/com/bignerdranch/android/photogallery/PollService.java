@@ -16,16 +16,18 @@ import android.util.Log;
 import java.util.List;
 
 /*A basic example of IntentService implementation
-* Registered with the system in the manifest file*/
+* Registered as a service with the system in the manifest file*/
 public class PollService extends IntentService {
 
 	private static final String TAG = "PollService";
 
-	//5 second poll interval
-	private static final int POLL_INTERVAL = 1000 * 5;
+	//15 minute poll interval
+	private static final long POLL_INTERVAL = AlarmManager.INTERVAL_FIFTEEN_MINUTES;
 
 	public static final String ACTION_SHOW_NOTIFICATION =
 			"com.bignerdranch.android.photogallery.SHOW_NOTIFICATION";
+	//Permission key; any application receiving broadcasts from this component must use this permission
+	public static final String PERM_PRIVATE = "com.bignerdranch.android.photogallery.PRIVATE";
 
 	public static Intent newIntent(Context context) {
 		return new Intent(context, PollService.class);
@@ -38,7 +40,7 @@ public class PollService extends IntentService {
 	/*Toggles a timer; state depends on given boolean
 	* Static so other components can invoke (other controller, other fragments)*/
 	public static void setServiceAlarm(Context context, boolean isOn) {
-		//Explicit intent
+		//An explicit intent; a PollService is the Intent to be passed AlarmManager
 		Intent i = PollService.newIntent(context);
 
 		/*getService(...)
@@ -56,7 +58,7 @@ public class PollService extends IntentService {
 
 		if (isOn) {
 			//Start alarm
-			/*Params
+			/*setInexactRepeating(...)
 			* - time basis for alarm
 			* - time at which alarm starts
 			* - interval at which to repeat alarm
@@ -77,7 +79,7 @@ public class PollService extends IntentService {
 		QueryPreferences.setAlarmOn(context, isOn);
 	}
 
-	/*Return boolean indicator: false = alarm is not set*/
+	/*Return boolean indicator of alarm state: true/false - alarm set/not set*/
 	public static boolean isServiceAlarmOn(Context context) {
 		Intent i = PollService.newIntent(context);
 		PendingIntent pi = PendingIntent.getService(context, 0, i, PendingIntent.FLAG_NO_CREATE);
@@ -143,7 +145,7 @@ public class PollService extends IntentService {
 			notificationManager.notify(0, notification);
 
 			//Broadcast an intent indicating search results are ready
-			sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION));
+			sendBroadcast(new Intent(ACTION_SHOW_NOTIFICATION), PERM_PRIVATE);
 		}
 
 		//Store in SharedPreferences
