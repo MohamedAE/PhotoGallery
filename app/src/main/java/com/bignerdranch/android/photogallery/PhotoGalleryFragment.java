@@ -200,15 +200,17 @@ public class PhotoGalleryFragment extends VisibleFragment {
             itemView.setOnClickListener(this);
         }
 
+        //Action to take when holder is associated with an image
         public void bindDrawable(Drawable drawable) {
 			mItemImageView.setImageDrawable(drawable);
 		}
 
+		//Action taken when holder is associated with a model object
 		public void bindGalleryItem(GalleryItem galleryItem) {
             mGalleryItem = galleryItem;
         }
 
-        //onClick listener for each item in the RecyclerView
+        //onClick listener for each item in the RecyclerView; launch WebView
         @Override
         public void onClick(View v) {
             Intent i = PhotoPageActivity.newIntent(getActivity(), mGalleryItem.getPhotoPageUri());

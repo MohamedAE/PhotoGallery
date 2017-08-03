@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
 
+/*Activity that will host the PhotoPageFragment*/
 public class PhotoPageActivity extends SingleFragmentActivity {
 
     public static Intent newIntent(Context context, Uri photoPageUri) {

@@ -129,6 +129,7 @@ public class PollService extends IntentService {
 			//Prepare a PendingIntent that will restart this activity
 			PendingIntent pi = PendingIntent.getActivity(this, 0, i, 0);
 
+			//Create new notification object
 			Notification notification = new NotificationCompat.Builder(this)
 					//Configure ticker text
 					.setTicker(resources.getString(R.string.new_pictures_title))
@@ -144,6 +145,7 @@ public class PollService extends IntentService {
 					.setAutoCancel(true)
 					.build();
 
+			//Broadcast as an ordered broadcast
 			showBackgroundNotification(0, notification);
 		}
 
@@ -152,11 +154,12 @@ public class PollService extends IntentService {
 	}
 
 	/*Constructs an ordered broadcast
-	* */
+	* Includes an explicit intent and a notification object*/
 	private void showBackgroundNotification(int requestCode, Notification notification) {
         Intent i = new Intent(ACTION_SHOW_NOTIFICATION);
         i.putExtra(REQUEST_CODE, requestCode);
         i.putExtra(NOTIFICATION, notification);
+
         /*sendOrderedBroadcast(...)
         * Version of sendBroadcast(...) that allows received data back from the broadcast
         * - intent

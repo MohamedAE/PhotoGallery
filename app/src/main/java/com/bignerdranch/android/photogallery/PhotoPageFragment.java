@@ -7,7 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebView;
 
-/*Fragment defining the WebView*/
+/*Fragment defining the WebView generated when an image is clicked/expanded*/
 public class PhotoPageFragment extends VisibleFragment {
 
     private static final String ARG_URI = "photo_page_url";
@@ -16,11 +16,11 @@ public class PhotoPageFragment extends VisibleFragment {
     private WebView mWebView;
 
     public static PhotoPageFragment newInstance(Uri uri) {
-        //Create bundle; place giben URI into it
+        //Create bundle; place given URI into it
         Bundle args = new Bundle();
         args.putParcelable(ARG_URI, uri);
 
-        //New PhotoPageFragment; associate above bundle
+        //New PhotoPageFragment; associate with above bundle
         PhotoPageFragment fragment = new PhotoPageFragment();
         fragment.setArguments(args);
         return fragment;
@@ -30,6 +30,7 @@ public class PhotoPageFragment extends VisibleFragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        //Return the arguments supplied to the fragment when it was created
         mUri = getArguments().getParcelable(ARG_URI);
     }
 
