@@ -22,6 +22,8 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 	private static final int MESSAGE_DOWNLOAD = 0;
 	private static final int MESSAGE_PRELOAD = 1;
 
+	private boolean mHasQuit = false;
+
 	//Reference to Handler of background thread
 	private Handler mRequestHandler;
 	//HashMap for storage/retrieval of URL associated with request
@@ -64,6 +66,14 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 			}
 		};
 	}
+
+	/*Cancels the Handler thread's looper*/
+	@Override
+	public boolean quit() {
+		mHasQuit = true;
+		return super.quit();
+	}
+
 
 	/*target - reference to PhotoHolder from the RecyclerView
 	* url	 - url to download*/
@@ -117,7 +127,7 @@ public class ThumbnailDownloader<T> extends HandlerThread {
 			//Add Runnable to Message Queue of the main thread's Handler
 			mResponseHandler.post(new Runnable() {
 				public void run() {
-					if (mRequestMap.get(target) != url) {
+					if (mRequestMap.get(target) != url || mHasQuit) {
 						return;
 					}
 
